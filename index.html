@@ -2,33 +2,75 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>EAN-13 Barcode Reader</title>
-  <!-- Include QuaggaJS from CDN -->
+  <title>EAN-13 Barcode Reader with API Search</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- QuaggaJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
-    #interactive.viewport {
-      position: relative;
+    body {
+      background-color: #f8f9fa;
+    }
+    #interactive {
       width: 100%;
       max-width: 640px;
-      margin: auto;
+      margin: 0 auto;
+      border: 2px solid #dee2e6;
+      border-radius: 4px;
     }
-    canvas, video {
-      width: 100%;
+    #barcode-result, #search-result {
+      font-weight: bold;
     }
-    #barcode-output {
-      text-align: center;
-      font-size: 1.5em;
+    .card {
       margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>EAN-13 Barcode Reader</h1>
-  <div id="interactive" class="viewport"></div>
-  <!-- Display the scanned barcode on the screen -->
-  <div id="barcode-output">Detected Barcode: <span id="barcode-result">None</span></div>
+  <div class="container">
+    <h1 class="text-center my-4">EAN-13 Barcode Reader with API Search</h1>
+    <div id="interactive" class="mb-4"></div>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Detected Barcode</h5>
+        <p class="card-text">Barcode: <span id="barcode-result">None</span></p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">API Search Results</h5>
+        <p class="card-text">Result: <span id="search-result">N/A</span></p>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // Flag to ensure that API is called only once per barcode
+    let barcodeFound = false;
+
+    // Function to search the API with the detected barcode id
+    function searchBarcodeAPI(code) {
+      // Replace with your actual API endpoint and parameters
+      const apiUrl = `https://api.example.com/barcode?code=${code}`;
+
+      fetch(apiUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Display the API results (here, converting JSON to string for demonstration)
+          document.getElementById('search-result').textContent = JSON.stringify(data);
+          console.log("API Search Results:", data);
+        })
+        .catch(error => {
+          console.error("API Search Error:", error);
+          document.getElementById('search-result').textContent = "Error retrieving data";
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
       if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
         Quagga.init({
@@ -56,15 +98,31 @@
         });
 
         Quagga.onDetected(function(result) {
+          // Check if a barcode has already been found
+          if (barcodeFound) return;
+
           var code = result.codeResult.code;
           // Write the scanned barcode value on screen
           document.getElementById('barcode-result').textContent = code;
           console.log("Barcode detected: " + code);
+
+          // Set flag to prevent further API calls
+          barcodeFound = true;
+          // Stop scanning
+          Quagga.stop();
+
+          // Trigger the API search with the scanned barcode id
+          searchBarcodeAPI(code);
         });
       } else {
         alert("Camera access is not supported by your browser.");
       }
     });
   </script>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
