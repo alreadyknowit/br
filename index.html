@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>EAN-13 Barcode Reader</title>
+  <!-- Include QuaggaJS from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <style>
+    #interactive.viewport {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: auto;
+    }
+    canvas, video {
+      width: 100%;
+    }
+    #barcode-output {
+      text-align: center;
+      font-size: 1.5em;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>EAN-13 Barcode Reader</h1>
+  <div id="interactive" class="viewport"></div>
+  <!-- Display the scanned barcode on the screen -->
+  <div id="barcode-output">Detected Barcode: <span id="barcode-result">None</span></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        Quagga.init({
+          inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#interactive'),
+            constraints: {
+              width: { min: 640 },
+              height: { min: 480 },
+              facingMode: "environment"  // use the back camera on mobile devices
+            }
+          },
+          decoder: {
+            // Only the EAN-13 barcode reader is enabled
+            readers: ["ean_reader"]
+          }
+        }, function(err) {
+          if (err) {
+            console.error(err);
+            return;
+          }
+          console.log("QuaggaJS initialized. Starting scanner...");
+          Quagga.start();
+        });
+
+        Quagga.onDetected(function(result) {
+          var code = result.codeResult.code;
+          // Write the scanned barcode value on screen
+          document.getElementById('barcode-result').textContent = code;
+          console.log("Barcode detected: " + code);
+        });
+      } else {
+        alert("Camera access is not supported by your browser.");
+      }
+    });
+  </script>
+</body>
+</html>
